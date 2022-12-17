@@ -1,56 +1,51 @@
 const { readLines } = require('../input')
 
+const max = 4000000
+
 const solve = () => {
 	const lines = readLines()
-	const max = 4000000
-	const set = new Array(max)
-	for (let i = 0; i <= max; i++) {
-		set[i] = new Array(max).fill(false)
-	}
 	const inputs = lines.map(line => {
-		const parts = line.replaceAll(/[a-zA-Z ,:]/g, '').split('=')
-		set[parseInt(parts[1])][parseInt(parts[2])] = true
-		set[parseInt(parts[3])][parseInt(parts[4])] = true
+		let parts = line.replaceAll(/[a-zA-Z ,:]/g, '').split('=')
+		parts.shift()
+		parts = parts.map(n => parseInt(n))
+		const dist = getDistance(parts[0], parts[1], parts[2], parts[3])
 		return {
-			sX: parseInt(parts[1]),
-			sY: parseInt(parts[2]),
-			bX: parseInt(parts[3]),
-			bY: parseInt(parts[4])
+			x: parts[0],
+			y: parts[1],
+			dist
 		}
 	})
-	inputs.forEach(n => {
-		const {sX, sY, bX, bY} = n
-		const minX = Math.min(sX, bX)
-		const maxX = Math.max(sX, bX)
-		const distanceX = maxX - minX
-		const minY = Math.min(sY, bY)
-                const maxY = Math.max(sY, bY)
-                const distanceY = maxY - minY
-		const distance = distanceX + distanceY
-		for (let j = 0; j <= distance; j++) {
-			const upY = sY - j
-			const downY = sY + j
-			const reach = distance - j
-			for (let i = 0; i <= reach; i++) {
-				const left = sX - i
-				const right = sX + i
-				set[left][upY] = true
-                                set[right][upY] = true
-			}
-			for (let i = 0; i <= reach; i++) {
-                                const left = sX - i
-                                const right = sX + i
-                                set[left][downY] = true
-                                set[right][downY] = true
-                        }
-		}
-	})
-	for (let i = 0; i <= max; i++) {
-		for (let j = 0; j <= max; j++) {
-			if (set[i][j] === true) continue
-			return i*max+j
+	for (let i = 0; i < inputs.length; i++) {
+		const {x, y, dist} = inputs[i]
+		for (let j = 0; j <= dist; j++) {
+			const reach = dist - j + 1
+			isAnswer(inputs, x+j, y+reach)
+			isAnswer(inputs, x+j, y-reach)
+			isAnswer(inputs, x-j, y+reach)
+			isAnswer(inputs, x-j, y-reach)
 		}
 	}
 }
 
-console.log(solve())
+const isAnswer = (inputs, x, y) => {
+	if (!isValid(x)) return
+	if (!isValid(y)) return
+	for (let i = 0; i < inputs.length; i++) {
+		const input = inputs[i]
+		const distToSensor = getDistance(x, y, input.x, input.y)
+		if (distToSensor <= input.dist) return
+	}
+	console.log(x*4000000+y)
+}
+
+const getDistance = (x1, y1, x2, y2) => {
+        const minX = Math.min(x1, x2)
+        const maxX = Math.max(x1, x2)
+        const distanceX = maxX - minX
+        const minY = Math.min(y1, y2)
+        const maxY = Math.max(y1, y2)
+        const distanceY = maxY - minY
+        return distanceX + distanceY
+}
+
+const isValid = num => num >= 0 && num <= max
